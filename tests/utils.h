@@ -27,7 +27,7 @@ G_BEGIN_DECLS
 
 
 typedef struct {
-  gboolean loop_running;
+  GMainLoop *loop;
   int calls;
   uint timeout_id;
 } TestUtilsCallback;

@@ -44,7 +44,8 @@
 static gboolean
 timeout_reached (TestUtilsCallback *self)
 {
-  gtk_main_quit ();
+  g_main_loop_quit (self->loop);
+  g_clear_object (&self->loop);
   g_assert_not_reached ();
   return G_SOURCE_REMOVE;
 }
@@ -54,7 +55,7 @@ void
 testutils_callback_init (TestUtilsCallback *self)
 {
   self->calls = 0;
-  self->loop_running = FALSE;
+  self->loop = NULL;
 }
 
 
@@ -79,14 +80,12 @@ testutils_callback_assert_called (TestUtilsCallback *self, int timeout)
     return;
   }
 
-  self->loop_running = TRUE;
   self->timeout_id = g_timeout_add (timeout, G_SOURCE_FUNC (timeout_reached), self);
-  gtk_main ();
+  self->loop = g_main_loop_new (NULL, true);
 
   g_source_remove (self->timeout_id);
 
   testutils_callback_assert_already_called (self);
-  self->loop_running = FALSE;
 }
 
 
@@ -95,8 +94,9 @@ testutils_callback_call (TestUtilsCallback *self)
 {
   self->calls ++;
 
-  if (self->loop_running) {
-    gtk_main_quit ();
+  if (self->loop) {
+    g_main_loop_quit (self->loop);
+    g_clear_object (&self->loop);
   }
 }
 

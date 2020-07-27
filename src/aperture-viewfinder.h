@@ -51,7 +51,7 @@ typedef enum {
 
 
 #define APERTURE_TYPE_VIEWFINDER (aperture_viewfinder_get_type())
-G_DECLARE_FINAL_TYPE (ApertureViewfinder, aperture_viewfinder, APERTURE, VIEWFINDER, GtkBin)
+G_DECLARE_FINAL_TYPE (ApertureViewfinder, aperture_viewfinder, APERTURE, VIEWFINDER, GtkWidget)
 
 
 ApertureViewfinder      *aperture_viewfinder_new                     (void);

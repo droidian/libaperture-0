@@ -90,10 +90,8 @@ test_barcodes_detection ()
   /* make sure that worked */
   g_assert_true (aperture_viewfinder_get_detect_barcodes (viewfinder));
 
-  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_container_add (GTK_CONTAINER (window), GTK_WIDGET (viewfinder));
-
-  gtk_widget_show_all (window);
+  window = gtk_window_new ();
+  gtk_widget_set_parent (GTK_WIDGET (viewfinder), window);
 
   testutils_callback_assert_called (&detected_callback, 1000);
 
@@ -101,7 +99,7 @@ test_barcodes_detection ()
   aperture_viewfinder_set_detect_barcodes (viewfinder, TRUE);
   testutils_callback_assert_called (&detected_callback, 1000);
 
-  gtk_widget_destroy (window);
+  gtk_window_destroy (GTK_WINDOW (window));
 }
 
 

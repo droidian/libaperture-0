@@ -87,15 +87,14 @@ test_viewfinder_take_picture ()
 
   viewfinder = aperture_viewfinder_new ();
 
-  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_container_add (GTK_CONTAINER (window), GTK_WIDGET (viewfinder));
-  gtk_widget_show_all (window);
+  window = gtk_window_new ();
+  gtk_widget_set_parent (GTK_WIDGET (viewfinder), window);
 
   aperture_viewfinder_take_picture_async (viewfinder, NULL, (GAsyncReadyCallback) on_picture_taken, &picture_callback);
 
   testutils_callback_assert_called (&picture_callback, 1000);
 
-  gtk_widget_destroy (window);
+  gtk_window_destroy (GTK_WINDOW (window));
 }
 
 
@@ -143,9 +142,9 @@ test_viewfinder_simultaneous_operations ()
 
   viewfinder = aperture_viewfinder_new ();
 
-  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_container_add (GTK_CONTAINER (window), GTK_WIDGET (viewfinder));
-  gtk_widget_show_all (window);
+  window = gtk_window_new ();
+
+  gtk_widget_set_parent (GTK_WIDGET (viewfinder), window);
 
   /* this is the operation that will block the others */
   aperture_viewfinder_take_picture_async (viewfinder, NULL, (GAsyncReadyCallback) simultaneous_operations_on_picture_taken_1, &picture_callback_1);
@@ -164,7 +163,7 @@ test_viewfinder_simultaneous_operations ()
   testutils_callback_assert_called (&picture_callback_1, 1000);
   testutils_callback_assert_called (&picture_callback_2, 1000);
 
-  gtk_widget_destroy (window);
+  gtk_window_destroy (GTK_WINDOW (window));
 }
 
 
@@ -202,9 +201,8 @@ test_viewfinder_disconnect_camera ()
 
   viewfinder = aperture_viewfinder_new ();
 
-  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_container_add (GTK_CONTAINER (window), GTK_WIDGET (viewfinder));
-  gtk_widget_show_all (window);
+  window = gtk_window_new ();
+  gtk_widget_set_parent (GTK_WIDGET (viewfinder), window);
 
   aperture_viewfinder_take_picture_async (viewfinder, NULL, (GAsyncReadyCallback) disconnect_on_picture_taken, &picture_callback);
 
@@ -212,7 +210,7 @@ test_viewfinder_disconnect_camera ()
   testutils_wait_for_device_change (manager);
   testutils_callback_assert_called (&picture_callback, 1000);
 
-  gtk_widget_destroy (window);
+  gtk_window_destroy (GTK_WINDOW (window));
 }
 
 

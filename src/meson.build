@@ -15,6 +15,9 @@ libaperture_sources = files(
   'devices/aperture-device.c',
 
   'pipeline/aperture-pipeline-tee.c',
+  'pipeline/gtkgstmediastream.c',
+  'pipeline/gtkgstpaintable.c',
+  'pipeline/gtkgstsink.c',
 
   'aperture-camera.c',
   'aperture-device-manager.c',
@@ -95,7 +98,7 @@ if get_option('gir')
     symbol_prefix: 'aperture',
     identifier_prefix: 'Aperture',
     link_with: libaperture_lib,
-    includes: ['Gst-1.0', 'Gtk-3.0'],
+    includes: ['Gst-1.0', 'Gtk-4.0'],
     install: true,
     extra_args: [
       '-D_LIBAPERTURE_COMPILATION',
@@ -105,7 +108,7 @@ if get_option('gir')
   if get_option('vapi')
     gnome.generate_vapi(aperture_library_name,
       sources: libaperture_gir[0],
-      packages: [ 'gtk+-3.0', 'gio-2.0', 'gstreamer-1.0' ],
+      packages: [ 'gtk4', 'gio-2.0', 'gstreamer-1.0' ],
       install: true,
       metadata_dirs: [meson.current_source_dir()],
     )

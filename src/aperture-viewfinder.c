@@ -78,10 +78,13 @@
 #include "aperture-device-manager.h"
 #include "aperture-utils.h"
 #include "aperture-viewfinder.h"
+#include "pipeline/aperture-pipeline-tee.h"
+#include "pipeline/gtkgstsinkprivate.h"
+#include "pipeline/gtkgstmediastreamprivate.h"
 
 struct _ApertureViewfinder
 {
-  GtkBin parent_instance;
+  GtkWidget parent_instance;
 
   ApertureDeviceManager *devices;
 
@@ -92,9 +95,13 @@ struct _ApertureViewfinder
   GstElement *branch_zbar;
 
   GstElement *gtksink;
+
   GstElement *vf_csp;
   GstElement *vf_vc;
   GtkWidget *sink_widget;
+
+  GtkWidget *picture;
+  //GtkMediaFile *media_stream;
 
   GstElement *multifilesink;
   GstElement *fs_csp;
@@ -113,7 +120,7 @@ struct _ApertureViewfinder
   GTask *task_take_video;
 };
 
-G_DEFINE_TYPE (ApertureViewfinder, aperture_viewfinder, GTK_TYPE_BIN)
+G_DEFINE_TYPE (ApertureViewfinder, aperture_viewfinder, GTK_TYPE_WIDGET)
 
 enum {
   PROP_0,
@@ -385,6 +392,17 @@ on_bus_message_async (GstBus *bus, GstMessage *message, gpointer user_data)
 
 
 static void
+aperture_viewfinder_dispose (GObject *object)
+{
+  ApertureViewfinder *self = APERTURE_VIEWFINDER (object);
+
+  gtk_widget_unparent (self->picture);
+
+  G_OBJECT_CLASS (aperture_viewfinder_parent_class)->dispose (object);
+}
+
+
+static void
 aperture_viewfinder_finalize (GObject *object)
 {
   ApertureViewfinder *self = APERTURE_VIEWFINDER (object);
@@ -443,6 +461,16 @@ aperture_viewfinder_set_property (GObject      *object,
 }
 
 
+static void
+aperture_viewfinder_compute_expand (GtkWidget *widget, gboolean *hexpand_p, gboolean *vexpand_p)
+{
+  ApertureViewfinder *self = APERTURE_VIEWFINDER (widget);
+
+  *hexpand_p = gtk_widget_compute_expand (self->picture, GTK_ORIENTATION_HORIZONTAL);
+  *vexpand_p = gtk_widget_compute_expand (self->picture, GTK_ORIENTATION_VERTICAL);
+}
+
+
 /* Starts the pipeline when the widget is realized */
 static void
 aperture_viewfinder_realize (GtkWidget *widget)
@@ -452,6 +480,21 @@ aperture_viewfinder_realize (GtkWidget *widget)
   GTK_WIDGET_CLASS (aperture_viewfinder_parent_class)->realize (widget);
 
   gst_element_set_state (self->pipeline, GST_STATE_PLAYING);
+}
+
+
+static void
+aperture_viewfinder_size_allocate (GtkWidget *widget, int a, int b, int c)
+{
+  ApertureViewfinder *self = APERTURE_VIEWFINDER (widget);
+  GtkAllocation alloc = {
+    .x = 0,
+    .y = 0,
+    .width = a,
+    .height = b
+  };
+
+  gtk_widget_size_allocate (self->picture, &alloc, c);
 }
 
 
@@ -476,10 +519,14 @@ aperture_viewfinder_class_init (ApertureViewfinderClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
+  object_class->dispose = aperture_viewfinder_dispose;
   object_class->finalize = aperture_viewfinder_finalize;
   object_class->get_property = aperture_viewfinder_get_property;
   object_class->set_property = aperture_viewfinder_set_property;
+
+  widget_class->compute_expand = aperture_viewfinder_compute_expand;
   widget_class->realize = aperture_viewfinder_realize;
+  widget_class->size_allocate = aperture_viewfinder_size_allocate;
   widget_class->unrealize = aperture_viewfinder_unrealize;
 
   /**
@@ -576,8 +623,10 @@ static void
 aperture_viewfinder_init (ApertureViewfinder *self)
 {
   g_autoptr(ApertureCamera) camera = NULL;
+
   GstBus *bus;
   GstElement *videoflip, *jpegenc;
+  GdkPaintable *paintable;
 
   aperture_private_ensure_initialized ();
 
@@ -590,14 +639,18 @@ aperture_viewfinder_init (ApertureViewfinder *self)
   videoflip = create_element (self, "videoflip");
   g_object_set (videoflip, "video-direction", 8, NULL);
 
-  self->gtksink = create_element (self, "gtksink");
-  g_object_set(self->gtksink, "sync", TRUE, NULL);
+  self->gtksink = g_object_new (gtk_gst_sink_get_type (), NULL);
+  self->picture = gtk_picture_new ();
+  //self->media_stream = g_object_new (GTK_TYPE_GST_MEDIA_STREAM, NULL);
 
-  g_object_get (self->gtksink, "widget", &self->sink_widget, NULL);
-  gtk_widget_set_hexpand (self->sink_widget, TRUE);
-  gtk_widget_set_vexpand (self->sink_widget, TRUE);
-  gtk_widget_show (self->sink_widget);
-  gtk_container_add (GTK_CONTAINER (self), self->sink_widget);
+  g_object_get (self->gtksink, "paintable", &paintable, NULL);
+  //gtk_gst_media_stream_set_sink (GTK_GST_MEDIA_STREAM (self->media_stream), paintable);
+  gtk_picture_set_paintable (GTK_PICTURE (self->picture), paintable);
+
+  gtk_widget_set_hexpand (self->picture, TRUE);
+  gtk_widget_set_vexpand (self->picture, TRUE);
+  gtk_widget_set_parent (self->picture, GTK_WIDGET (self));
+
   self->tee = aperture_pipeline_tee_new ();
   aperture_pipeline_tee_add_branch (self->tee, self->gtksink);
 
@@ -702,7 +755,7 @@ aperture_viewfinder_set_camera (ApertureViewfinder *self, ApertureCamera *camera
     g_object_set(self->camerabin, "camera-device", idx, NULL);
   }
 
-  if (gtk_widget_get_realized (GTK_WIDGET (self->sink_widget))) {
+  if (gtk_widget_get_realized (GTK_WIDGET (self->picture))) {
     gst_element_set_state (self->pipeline, GST_STATE_PLAYING);
   }
 

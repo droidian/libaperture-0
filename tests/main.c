@@ -36,7 +36,7 @@ int
 main (int argc, char **argv)
 {
   aperture_init (&argc, &argv);
-  gtk_init (&argc, &argv);
+  gtk_init ();
   g_test_init (&argc, &argv, NULL);
 
   /* Set up the dummy device provider in GStreamer */
