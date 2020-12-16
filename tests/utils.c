@@ -131,10 +131,10 @@ pixbuf_pixel (GdkPixbuf *pixbuf, int x, int y)
 {
   int channels = gdk_pixbuf_get_n_channels (pixbuf);
   int rowstride = gdk_pixbuf_get_rowstride (pixbuf);
-  int offset = (y*rowstride + x*channels) / channels;
+  int offset = y*rowstride + x*channels;
 
-  /* & 0xFFFFFF because we're only interested in RGB, not alpha */
-  return ((guint32 *) gdk_pixbuf_read_pixels (pixbuf))[offset] & 0xFFFFFF;
+  const guint8 *pixel = &gdk_pixbuf_read_pixels (pixbuf)[offset];
+  return pixel[0] << 16 | pixel[1] << 8 | pixel[2];
 }
 
 
@@ -148,9 +148,9 @@ testutils_assert_quadrants_pixbuf (GdkPixbuf *pixbuf)
   g_assert_cmpint (gdk_pixbuf_get_width (pixbuf), ==, 128);
   g_assert_cmpint (gdk_pixbuf_get_height (pixbuf), ==, 128);
 
-  g_assert_cmphex (pixbuf_pixel (pixbuf, 32, 32), ==, 0x0000FF);
+  g_assert_cmphex (pixbuf_pixel (pixbuf, 32, 32), ==, 0xFF0000);
   g_assert_cmphex (pixbuf_pixel (pixbuf, 96, 32), ==, 0x00FF00);
-  g_assert_cmphex (pixbuf_pixel (pixbuf, 32, 96), ==, 0xFF0000);
+  g_assert_cmphex (pixbuf_pixel (pixbuf, 32, 96), ==, 0x0000FF);
   g_assert_cmphex (pixbuf_pixel (pixbuf, 96, 96), ==, 0x000000);
 }
 
