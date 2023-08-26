@@ -577,17 +577,22 @@ aperture_viewfinder_init (ApertureViewfinder *self)
 {
   g_autoptr(ApertureCamera) camera = NULL;
   GstBus *bus;
+  GstElement *videoflip, *jpegenc;
 
   aperture_private_ensure_initialized ();
 
   self->pipeline = gst_pipeline_new(NULL);
+  g_object_set(self->pipeline, "message-forward", TRUE, NULL);
+
   self->camerabin = create_element(self, "droidcamsrc");
   self->vf_csp = create_element(self, "capsfilter");
 
-  GstElement *videoflip = create_element (self, "videoflip");
+  videoflip = create_element (self, "videoflip");
   g_object_set (videoflip, "video-direction", 8, NULL);
 
   self->gtksink = create_element (self, "gtksink");
+  g_object_set(self->gtksink, "sync", TRUE, NULL);
+
   g_object_get (self->gtksink, "widget", &self->sink_widget, NULL);
   gtk_widget_set_hexpand (self->sink_widget, TRUE);
   gtk_widget_set_vexpand (self->sink_widget, TRUE);
@@ -606,15 +611,17 @@ aperture_viewfinder_init (ApertureViewfinder *self)
   self->fs_q = create_element(self, "queue");
   g_object_set (self->fs_q, "leaky", 1, "max-size-buffers", 1, NULL);
 
+  jpegenc = create_element (self, "jpegenc");
+
   gst_bin_add_many(GST_BIN(self->pipeline), self->camerabin,
                    self->vf_csp, videoflip, self->tee, self->vf_vc,
                    self->multifilesink, self->fs_csp, self->fs_q,
-                   NULL);
+                   jpegenc, NULL);
 
   gst_element_link_pads(self->camerabin, "vfsrc", self->vf_csp, "sink");
   gst_element_link_many(self->vf_csp, videoflip, self->vf_vc, self->tee, NULL);
   gst_element_link_pads(self->camerabin, "imgsrc", self->fs_csp, "sink");
-  gst_element_link_many(self->fs_csp, self->fs_q, self->multifilesink, NULL);
+  gst_element_link_many(self->fs_csp, self->fs_q, jpegenc, self->multifilesink, NULL);
 
   bus = gst_pipeline_get_bus (GST_PIPELINE (self->pipeline));
   gst_bus_add_watch (bus, on_bus_message_async, self);
