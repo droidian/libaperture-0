@@ -885,6 +885,7 @@ aperture_viewfinder_start_recording_to_file (ApertureViewfinder *self, const cha
 {
   GError *err = NULL;
   GstCaps *caps;
+  GstElement *matroskamux;
 
   g_return_if_fail (APERTURE_IS_VIEWFINDER (self));
   g_return_if_fail (file != NULL);
@@ -901,10 +902,15 @@ aperture_viewfinder_start_recording_to_file (ApertureViewfinder *self, const cha
   self->filesink = create_element(self, "filesink");
   g_object_set(self->filesink, "location", file, NULL);
 
-  gst_bin_add (GST_BIN (self->pipeline), self->filesink);
+  matroskamux = create_element(self, "matroskamux");
 
-  caps = gst_caps_from_string("video/x-h264, framerate=30/1");
-  gst_element_link_pads_filtered(self->camerabin, "vidsrc", self->filesink, "sink", caps);
+  gst_bin_add_many(GST_BIN(self->pipeline), matroskamux, self->filesink, NULL);
+
+  caps = gst_caps_from_string("video/x-raw, framerate=30/1");
+
+  gst_element_link_pads_filtered(self->camerabin, "vidsrc", matroskamux, "sink", caps);
+  gst_element_link(matroskamux, self->filesink);
+
   gst_caps_unref(caps);
 
   g_object_set (self->camerabin, "mode", 2, NULL);
