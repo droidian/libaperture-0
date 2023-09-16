@@ -41,3 +41,10 @@ libaperture-0.so.0 libaperture-0-0 #MINVER#
  aperture_viewfinder_stop_recording_finish@Base 0.0.0+git20200713
  aperture_viewfinder_take_picture_async@Base 0.0.0+git20200713
  aperture_viewfinder_take_picture_finish@Base 0.0.0+git20200713
+ gtk_debug_gst_sink@Base 0.1.0+git20200908-1~git20230916011616.7035d29.trixie.droidcamsrc.devel.upgrade
+ gtk_gst_media_stream_get_type@Base 0.1.0+git20200908-1~git20230916011616.7035d29.trixie.droidcamsrc.devel.upgrade
+ gtk_gst_media_stream_set_sink@Base 0.1.0+git20200908-1~git20230916011616.7035d29.trixie.droidcamsrc.devel.upgrade
+ gtk_gst_paintable_get_type@Base 0.1.0+git20200908-1~git20230916011616.7035d29.trixie.droidcamsrc.devel.upgrade
+ gtk_gst_paintable_new@Base 0.1.0+git20200908-1~git20230916011616.7035d29.trixie.droidcamsrc.devel.upgrade
+ gtk_gst_paintable_queue_set_texture@Base 0.1.0+git20200908-1~git20230916011616.7035d29.trixie.droidcamsrc.devel.upgrade
+ gtk_gst_sink_get_type@Base 0.1.0+git20200908-1~git20230916011616.7035d29.trixie.droidcamsrc.devel.upgrade
