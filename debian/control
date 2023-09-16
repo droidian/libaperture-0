@@ -12,6 +12,7 @@ Build-Depends:
  gtk-doc-tools,
  libgirepository1.0-dev,
  libgstreamer-plugins-base1.0-dev,
+ libgstreamer-plugins-bad1.0-dev,
  libgtk-4-dev,
  meson,
  valac,
